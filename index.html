@@ -200,11 +200,10 @@
         fetchBalance();
 
         const endDate = new Date("June 15, 2024 14:00:00").getTime();
-        const now_a = new Date().getTime() + 3000;
 
         function updateCountdown() {
           const now = new Date().getTime();
-          const distance = now_a - now;
+          const distance = endDate - now;
 
           const days = Math.floor(distance / (1000 * 60 * 60 * 24));
           const hours = Math.floor(
