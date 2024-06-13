@@ -79,6 +79,10 @@
         max-width: 1200px;
         opacity: 1;
       }
+      .deactivate_button {
+        pointer-events: none;
+        background: #e5e7eb;
+      }
     </style>
   </head>
   <body
@@ -98,6 +102,7 @@
       class="relative bg-white p-8 rounded-lg shadow-lg mb-6 text-center -mt-16"
     >
       <div
+        id="live-status"
         class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center bg-gray-200 rounded-full px-3 py-1"
       >
         <div class="w-3 h-3 bg-red-600 rounded-full mr-2 blinking"></div>
@@ -128,6 +133,7 @@
     >
       <div id="balance" class="mb-4">Loading balance...</div>
       <a
+        id="pp_link"
         href="https://app.jellyverse.org/pool-party"
         target="_blank"
         class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 pink-gradient"
@@ -194,10 +200,11 @@
         fetchBalance();
 
         const endDate = new Date("June 15, 2024 14:00:00").getTime();
+        const now_a = new Date().getTime() + 3000;
 
         function updateCountdown() {
           const now = new Date().getTime();
-          const distance = endDate - now;
+          const distance = now_a - now;
 
           const days = Math.floor(distance / (1000 * 60 * 60 * 24));
           const hours = Math.floor(
@@ -213,7 +220,7 @@
           document.getElementById("minutes").innerText = minutes;
           document.getElementById("seconds").innerText = seconds;
 
-          if (distance < 0) {
+          if (distance <= 0) {
             clearInterval(interval);
             document.getElementById("countdown").innerHTML = `
               <div>
@@ -234,11 +241,19 @@
               </div>
             `;
             const liveStatus = document.getElementById("live-status");
+            console.log(liveStatus);
             liveStatus.innerHTML = `
               <div class="w-3 h-3 bg-gray-600 rounded-full mr-2"></div>
               <span class="text-gray-600 font-semibold">Ended</span>
             `;
             liveStatus.classList.remove("blinking");
+            const ppLink = document.getElementById("pp_link");
+            ppLink.href = "#";
+            ppLink.innerHTML = `
+              <span class="text-gray-600 font-semibold">Ended</span>
+            `;
+            // ppLink.classList.remove("");
+            ppLink.classList.add("deactivate_button");
           }
         }
 
