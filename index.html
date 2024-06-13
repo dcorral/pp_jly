@@ -9,12 +9,98 @@
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
       rel="stylesheet"
     />
+    <style>
+      @keyframes blink {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+      .blinking {
+        animation: blink 1s infinite;
+      }
+      .pink-gradient {
+        background: linear-gradient(
+          45deg,
+          #ff9a9e,
+          #fecfef,
+          #feada6,
+          #fbc2eb,
+          #a1c4fd,
+          #c2e9fb,
+          #d4fc79,
+          #96e6a1
+        );
+        background-size: 400% 400%;
+        animation: gradient 5s ease infinite;
+        color: #4a4a4a;
+        text-transform: uppercase;
+        font-weight: bold;
+        padding: 15px;
+        border-radius: 25px;
+        text-align: center;
+        min-width: 250px;
+      }
+      @keyframes gradient {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+      .dark-mode {
+        background-color: #1a202c;
+      }
+      .dark-mode .text-gray-800 {
+        color: #1a202c !important;
+      }
+      .dark-mode-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        outline: none;
+        font-size: 2rem;
+      }
+      .video-background {
+        position: absolute;
+        top: 0%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 230px;
+        max-width: 1200px;
+        opacity: 1;
+      }
+    </style>
   </head>
   <body
-    class="bg-gray-100 flex flex-col items-center justify-center min-h-screen"
+    class="dark-mode bg-gray-100 flex flex-col items-center justify-center min-h-screen transition-colors duration-300"
   >
-    <div class="bg-white p-8 rounded-lg shadow-lg mb-6 text-center">
-      <div id="countdown" class="flex space-x-4 text-4xl font-bold">
+    <button id="darkModeToggle" class="absolute top-4 right-4 dark-mode-toggle">
+      🌞
+    </button>
+    <video autoplay loop muted class="video-background">
+      <source src="/assets/jelly.webm" type="video/webm" />
+      Your browser does not support the video tag.
+    </video>
+    <div
+      class="relative bg-white p-8 rounded-lg shadow-lg mb-6 text-center -mt-16"
+    >
+      <div
+        class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center bg-gray-200 rounded-full px-3 py-1"
+      >
+        <div class="w-3 h-3 bg-red-600 rounded-full mr-2 blinking"></div>
+        <span class="text-gray-800 font-semibold">Live</span>
+      </div>
+      <div id="countdown" class="flex space-x-4 text-4xl font-bold mt-4">
         <div>
           <span id="days" class="block">0</span>
           <span class="text-sm font-normal">Days</span>
@@ -33,17 +119,20 @@
         </div>
       </div>
     </div>
-    <div id="container" class="bg-white p-8 rounded-lg shadow-lg text-center">
+    <div
+      id="container"
+      class="relative bg-white p-8 rounded-lg shadow-lg text-center"
+    >
       <div id="balance" class="mb-4">Loading balance...</div>
-      <button
-        id="refreshButton"
-        class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700"
+      <a
+        href="https://app.jellyverse.org/pool-party"
+        target="_blank"
+        class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 pink-gradient"
       >
-        Refresh
-      </button>
+        PARTICIPATE NOW!
+      </a>
     </div>
 
-    <!-- Include web3.js library -->
     <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
@@ -63,6 +152,7 @@
         ];
 
         const initialTotal = 16664519.62;
+        let lastBalance = null;
 
         async function fetchBalance() {
           try {
@@ -85,22 +175,21 @@
               ((initialTotal - tokenBalanceNormalized) / initialTotal) * 100;
             const formattedPercentageSold = percentageSold.toFixed(2);
 
-            document.getElementById("balance").innerText =
-              `PoolParty balance: ${formattedBalance} JLY\n${formattedPercentageSold}% of the total sold`;
+            const newBalanceText = `PoolParty balance: ${formattedBalance} JLY\n${formattedPercentageSold}% of the total sold`;
+
+            if (lastBalance !== newBalanceText) {
+              document.getElementById("balance").innerText = newBalanceText;
+              lastBalance = newBalanceText;
+            }
           } catch (e) {
             document.getElementById("balance").innerText =
               `Error: ${e.message}`;
           }
         }
 
-        document
-          .getElementById("refreshButton")
-          .addEventListener("click", fetchBalance);
-
-        // Fetch the balance when the page loads
+        setInterval(fetchBalance, 5000);
         fetchBalance();
 
-        // Countdown timer
         const endDate = new Date("June 15, 2024 14:00:00").getTime();
 
         function updateCountdown() {
@@ -123,12 +212,49 @@
 
           if (distance < 0) {
             clearInterval(interval);
-            document.getElementById("countdown").innerHTML = "EXPIRED";
+            document.getElementById("countdown").innerHTML = `
+              <div>
+                <span id="days" class="block">0</span>
+                <span class="text-sm font-normal">Days</span>
+              </div>
+              <div>
+                <span id="hours" class="block">0</span>
+                <span class="text-sm font-normal">Hours</span>
+              </div>
+              <div>
+                <span id="minutes" class="block">0</span>
+                <span class="text-sm font-normal">Minutes</span>
+              </div>
+              <div>
+                <span id="seconds" class="block">0</span>
+                <span class="text-sm font-normal">Seconds</span>
+              </div>
+            `;
+            const liveStatus = document.getElementById("live-status");
+            liveStatus.innerHTML = `
+              <div class="w-3 h-3 bg-gray-600 rounded-full mr-2"></div>
+              <span class="text-gray-600 font-semibold">Ended</span>
+            `;
+            liveStatus.classList.remove("blinking");
           }
         }
 
         const interval = setInterval(updateCountdown, 1000);
         updateCountdown();
+
+        function toggleDarkMode() {
+          document.body.classList.toggle("dark-mode");
+          const button = document.getElementById("darkModeToggle");
+          if (document.body.classList.contains("dark-mode")) {
+            button.textContent = "🌞";
+          } else {
+            button.textContent = "🌙";
+          }
+        }
+
+        document
+          .getElementById("darkModeToggle")
+          .addEventListener("click", toggleDarkMode);
       });
     </script>
   </body>
