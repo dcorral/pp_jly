@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Token Balance</title>
+    <!-- Tailwind CSS CDN -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body
+    class="bg-gray-100 flex flex-col items-center justify-center min-h-screen"
+  >
+    <div class="bg-white p-8 rounded-lg shadow-lg mb-6 text-center">
+      <div id="countdown" class="flex space-x-4 text-4xl font-bold">
+        <div>
+          <span id="days" class="block">0</span>
+          <span class="text-sm font-normal">Days</span>
+        </div>
+        <div>
+          <span id="hours" class="block">0</span>
+          <span class="text-sm font-normal">Hours</span>
+        </div>
+        <div>
+          <span id="minutes" class="block">0</span>
+          <span class="text-sm font-normal">Minutes</span>
+        </div>
+        <div>
+          <span id="seconds" class="block">0</span>
+          <span class="text-sm font-normal">Seconds</span>
+        </div>
+      </div>
+    </div>
+    <div id="container" class="bg-white p-8 rounded-lg shadow-lg text-center">
+      <div id="balance" class="mb-4">Loading balance...</div>
+      <button
+        id="refreshButton"
+        class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700"
+      >
+        Refresh
+      </button>
+    </div>
+
+    <!-- Include web3.js library -->
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const SEI_NODE_URL = "https://seievm-rpc.polkachu.com";
+        const web3 = new Web3(new Web3.providers.HttpProvider(SEI_NODE_URL));
+
+        const address = "0xcc11c2b7508a922319D49FA11DbC33C9b29e0934";
+        const tokenAddress = "0xDD7d5e4Ea2125d43C16eEd8f1FFeFffa2F4b4aF6";
+        const ERC20_ABI = [
+          {
+            constant: true,
+            inputs: [{ name: "_owner", type: "address" }],
+            name: "balanceOf",
+            outputs: [{ name: "balance", type: "uint256" }],
+            type: "function",
+          },
+        ];
+
+        const initialTotal = 16664519.62;
+
+        async function fetchBalance() {
+          try {
+            const tokenContract = new web3.eth.Contract(
+              ERC20_ABI,
+              tokenAddress,
+            );
+            const tokenBalance = await tokenContract.methods
+              .balanceOf(address)
+              .call();
+            const tokenBalanceNormalized =
+              web3.utils.fromWei(tokenBalance, "ether") / 2;
+
+            const formattedBalance = tokenBalanceNormalized.toLocaleString(
+              "en-US",
+              { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+            );
+
+            const percentageSold =
+              ((initialTotal - tokenBalanceNormalized) / initialTotal) * 100;
+            const formattedPercentageSold = percentageSold.toFixed(2);
+
+            document.getElementById("balance").innerText =
+              `PoolParty balance: ${formattedBalance} JLY\n${formattedPercentageSold}% of the total sold`;
+          } catch (e) {
+            document.getElementById("balance").innerText =
+              `Error: ${e.message}`;
+          }
+        }
+
+        document
+          .getElementById("refreshButton")
+          .addEventListener("click", fetchBalance);
+
+        // Fetch the balance when the page loads
+        fetchBalance();
+
+        // Countdown timer
+        const endDate = new Date("June 15, 2024 14:00:00").getTime();
+
+        function updateCountdown() {
+          const now = new Date().getTime();
+          const distance = endDate - now;
+
+          const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+          const hours = Math.floor(
+            (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+          );
+          const minutes = Math.floor(
+            (distance % (1000 * 60 * 60)) / (1000 * 60),
+          );
+          const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+          document.getElementById("days").innerText = days;
+          document.getElementById("hours").innerText = hours;
+          document.getElementById("minutes").innerText = minutes;
+          document.getElementById("seconds").innerText = seconds;
+
+          if (distance < 0) {
+            clearInterval(interval);
+            document.getElementById("countdown").innerHTML = "EXPIRED";
+          }
+        }
+
+        const interval = setInterval(updateCountdown, 1000);
+        updateCountdown();
+      });
+    </script>
+  </body>
+</html>
